@@ -2,10 +2,21 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useState } from "react";
-import { Alert, Image, StyleSheet, Text, TextInput, View, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
-import { auth, db } from "../firebaseConfig";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { auth, db, storage } from "../firebaseConfig"; // Ensure storage is imported
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -15,6 +26,7 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const pickImage = async () => {
+    if (loading) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -29,8 +41,8 @@ export default function RegisterScreen() {
   const uploadImageAsync = async (uri, userId) => {
     const response = await fetch(uri);
     const blob = await response.blob();
+
     const filename = `${userId}.jpg`;
-    const storage = getStorage();
     const imageRef = ref(storage, `profile_images/${filename}`);
 
     await uploadBytes(imageRef, blob);
@@ -38,6 +50,16 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
+    if (!email.includes("@") || !password) {
+      Alert.alert("Invalid Input", "Please enter a valid email and password.");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Weak Password", "Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -57,6 +79,7 @@ export default function RegisterScreen() {
       Alert.alert("Success", "Account Created!");
       router.replace("/home");
     } catch (error) {
+      console.error(error);
       Alert.alert("Registration Error", error.message);
     } finally {
       setLoading(false);
@@ -84,23 +107,37 @@ export default function RegisterScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-        <Text style={styles.imageButtonText}>
+      <TouchableOpacity
+        style={[styles.button, loading && styles.disabledButton]}
+        onPress={pickImage}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
           {image ? "Change Profile Picture" : "Pick Profile Picture"}
         </Text>
       </TouchableOpacity>
 
-      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {image ? (
+        <Image source={{ uri: image }} style={styles.image} />
+      ) : (
+        <View style={styles.imagePlaceholder}>
+          <Text style={{ color: "#aaa" }}>No image selected</Text>
+        </View>
+      )}
 
       <TouchableOpacity
-        style={[styles.registerButton, loading && styles.disabledButton]}
+        style={[
+          styles.button,
+          { backgroundColor: "#28A745" },
+          loading && styles.disabledButton,
+        ]}
         onPress={handleRegister}
         disabled={loading}
       >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.registerButtonText}>Register</Text>
+          <Text style={styles.buttonText}>Register</Text>
         )}
       </TouchableOpacity>
     </ScrollView>
@@ -110,37 +147,53 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: "#fff",
+    backgroundColor: "#f9f9f9",
     flexGrow: 1,
+    alignItems: "center",
     justifyContent: "center",
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 30,
-    textAlign: "center",
+    fontWeight: "700",
+    marginBottom: 40,
     color: "#333",
+    textAlign: "center",
   },
   input: {
+    width: "100%",
+    maxWidth: 300,
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 18,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
-  },
-  imageButton: {
-    backgroundColor: "#007AFF",
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
     marginBottom: 16,
-  },
-  imageButtonText: {
-    color: "#fff",
-    fontWeight: "600",
     fontSize: 16,
+  },
+  button: {
+    width: "100%",
+    maxWidth: 300,
+    backgroundColor: "#007AFF",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    marginBottom: 16,
+    alignItems: "center",
+    ...Platform.select({
+      android: { elevation: 4 },
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+    }),
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   image: {
     width: 120,
@@ -149,17 +202,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: 16,
   },
-  registerButton: {
-    backgroundColor: "#28A745",
-    padding: 14,
-    borderRadius: 10,
+  imagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#e0e0e0",
     alignItems: "center",
-    marginTop: 12,
-  },
-  registerButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    justifyContent: "center",
+    marginVertical: 16,
   },
   disabledButton: {
     backgroundColor: "#A5D6A7",

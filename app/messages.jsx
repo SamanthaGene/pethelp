@@ -1,14 +1,31 @@
-import React, { useEffect, useState } from "react";
-import { View, TextInput, FlatList, Text, KeyboardAvoidingView, Platform, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { auth, db } from "../firebaseConfig";
-import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 
 export default function MessagesScreen() {
   const [text, setText] = useState("");
   const [messages, setMessages] = useState([]);
 
   const currentUser = auth.currentUser;
-  const otherUserId = "test-user-456"; // Replace with dynamic user ID logic later
+  const otherUserId = "test-user-456"; // Replace with dynamic logic
 
   useEffect(() => {
     if (!currentUser) return;
@@ -59,12 +76,13 @@ export default function MessagesScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
+      keyboardVerticalOffset={90}
     >
       <FlatList
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingVertical: 10 }}
+        contentContainerStyle={styles.messagesContainer}
         inverted
       />
 
@@ -72,7 +90,8 @@ export default function MessagesScreen() {
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder="Type a message"
+          placeholder="Type your message..."
+          placeholderTextColor="#888"
           style={styles.input}
         />
         <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
@@ -86,52 +105,66 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
+    backgroundColor: "#f5f5f5",
+  },
+  messagesContainer: {
+    padding: 16,
   },
   messageBubble: {
     maxWidth: "75%",
-    padding: 10,
-    borderRadius: 12,
-    marginVertical: 4,
+    padding: 12,
+    borderRadius: 16,
+    marginVertical: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
   },
   myMessage: {
-    backgroundColor: "#dcf8c6",
+    backgroundColor: "#007aff",
     alignSelf: "flex-end",
+    borderTopRightRadius: 0,
   },
   theirMessage: {
-    backgroundColor: "#eee",
+    backgroundColor: "#e1e1e1",
     alignSelf: "flex-start",
+    borderTopLeftRadius: 0,
   },
   messageText: {
+    color: "#fff",
     fontSize: 16,
-    color: "#333",
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
+    padding: 10,
     borderTopWidth: 1,
     borderColor: "#ddd",
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#fff",
   },
   input: {
     flex: 1,
-    padding: 12,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
+    backgroundColor: "#f1f1f1",
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 16,
+    marginRight: 10,
+    color: "#333",
   },
   sendButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
     backgroundColor: "#007aff",
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    shadowColor: "#007aff",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
   sendButtonText: {
     color: "#fff",
+    fontSize: 16,
     fontWeight: "600",
   },
 });

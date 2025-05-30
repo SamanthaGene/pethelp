@@ -1,8 +1,18 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
-import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { auth } from "../firebaseConfig";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -34,92 +44,118 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.container}
+    >
+      <View style={styles.card}>
+        <Text style={styles.title}>Welcome Back</Text>
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="emailAddress"
+          returnKeyType="next"
+          style={styles.input}
+        />
 
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-        secureTextEntry
-      />
+        <TextInput
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          textContentType="password"
+          returnKeyType="done"
+          style={styles.input}
+        />
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.disabledButton]}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Login</Text>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleLogin}
+          style={[styles.button, loading && styles.disabledButton]}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => router.push("/register")}
-        style={styles.link}
-      >
-        <Text style={styles.linkText}>Don't have an account? Register</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          onPress={() => router.push("/register")}
+          style={styles.link}
+        >
+          <Text style={styles.linkText}>Don’t have an account? Register</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
-    backgroundColor: "#fff",
     flex: 1,
+    backgroundColor: "#f3f4f6",
     justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "#fff",
+    padding: 28,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 30,
+    fontWeight: "700",
+    color: "#222",
     textAlign: "center",
-    color: "#333",
+    marginBottom: 24,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 18,
+    width: "100%",
+    backgroundColor: "#f1f1f1",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
   button: {
     backgroundColor: "#007AFF",
-    padding: 14,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 8,
   },
   buttonText: {
     color: "#fff",
-    fontWeight: "600",
     fontSize: 16,
+    fontWeight: "600",
   },
   disabledButton: {
-    backgroundColor: "#90CAF9",
+    backgroundColor: "#9ecbff",
   },
   link: {
     marginTop: 20,
     alignItems: "center",
   },
   linkText: {
-    color: "#007AFF",
     fontSize: 14,
+    color: "#007AFF",
   },
 });

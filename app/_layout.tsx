@@ -1,29 +1,92 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Tabs } from "expo-router";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+export default function Layout () {
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+    return (
+        <Tabs>
+            <Tabs.Screen 
+                name="index"
+                options={{
+                    title: "Login",
+                    tabBarIcon: ({ color }) => 
+                        <MaterialIcons size={28} name="alarm-add" color={color} />,
+                        tabBarActiveTintColor: '#0b5345',
+                        headerTitleStyle: {
+                            color: '#0b5345',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
+            <Tabs.Screen 
+                name="add-pet"
+                options={{
+                    title: "Add Pet",
+                    tabBarIcon: ({ color }) => 
+                        <MaterialIcons size={28} name="9mp" color={color} />,
+                        tabBarActiveTintColor: '#0b5345',
+                        headerTitleStyle: {
+                            color: '#0b5345',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+            <Tabs.Screen 
+                name="favorites"
+                options={{
+                    title: "Favorites",
+                    tabBarIcon: ({ color }) => 
+                        <MaterialIcons size={28} name="9mp" color={color} />,
+                        tabBarActiveTintColor: '#0b5345',
+                        headerTitleStyle: {
+                            color: '#0b5345',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+            <Tabs.Screen 
+                name="home"
+                options={{
+                    title: "Home",
+                    tabBarIcon: ({ color }) => 
+                        <MaterialIcons size={28} name="9mp" color={color} />,
+                        tabBarActiveTintColor: '#0b5345',
+                        headerTitleStyle: {
+                            color: '#0b5345',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
+
+            <Tabs.Screen 
+                name="register"
+                options={{
+                    title: "Register",
+                    tabBarIcon: ({ color }) => 
+                        <MaterialIcons size={28} name="9mp" color={color} />,
+                        tabBarActiveTintColor: '#0b5345',
+                        headerTitleStyle: {
+                            color: '#0b5345',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
+
+            <Tabs.Screen 
+                name="messages"
+                options={{
+                    title: "Messages",
+                    tabBarIcon: ({ color }) => 
+                        <MaterialIcons size={28} name="9mp" color={color} />,
+                        tabBarActiveTintColor: '#0b5345',
+                        headerTitleStyle: {
+                            color: '#0b5345',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
+        </Tabs>
+    )
 }
