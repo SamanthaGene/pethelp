@@ -7,7 +7,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../firebaseConfig";
 
 export default function FavoritesScreen() {
@@ -24,33 +25,39 @@ export default function FavoritesScreen() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      try {
-        const favQuery = query(
-          collection(db, "favorites"),
-          where("userId", "==", auth.currentUser.uid)
-        );
-        const favSnap = await getDocs(favQuery);
+  const fetchFavorites = async () => {
+    setLoading(true);
+    try {
+      const favQuery = query(
+        collection(db, "favorites"),
+        where("userId", "==", auth.currentUser.uid)
+      );
+      const favSnap = await getDocs(favQuery);
 
-        const pets = [];
-        for (const favDoc of favSnap.docs) {
-          const petId = favDoc.data().petId;
-          const petDoc = await getDoc(doc(db, "pets", petId));
-          if (petDoc.exists()) {
-            pets.push({ id: petId, ...petDoc.data() });
+      const pets = [];
+      for (const favDoc of favSnap.docs) {
+        const petId = favDoc.data().petId;
+        const petDoc = await getDoc(doc(db, "pets", petId));
+        if (petDoc.exists()) {
+          const petData = petDoc.data();
+          if (!petData.adopted) {
+            pets.push({ id: petId, ...petData });
           }
         }
-        setFavorites(pets);
-      } catch (error) {
-        console.error("Error fetching favorites:", error);
-      } finally {
-        setLoading(false);
       }
-    };
+      setFavorites(pets);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchFavorites();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchFavorites();
+    }, [])
+  );
 
   if (loading) {
     return (

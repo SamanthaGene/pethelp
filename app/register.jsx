@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,

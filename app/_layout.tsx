@@ -1,92 +1,69 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Tabs } from "expo-router";
+import { Stack } from "expo-router";
 
 export default function Layout () {
 
     return (
-        <Tabs>
-            <Tabs.Screen 
+        <Stack>
+            <Stack.Screen 
                 name="index"
                 options={{
                     title: "Login",
-                    tabBarIcon: ({ color }) => 
-                        <MaterialIcons size={28} name="alarm-add" color={color} />,
-                        tabBarActiveTintColor: '#0b5345',
                         headerTitleStyle: {
-                            color: '#0b5345',
+                            color: '#333',
                             fontWeight: "bold",
                         }
                 }}
             />
-            <Tabs.Screen 
+            <Stack.Screen 
                 name="add-pet"
                 options={{
-                    title: "Add Pet",
-                    tabBarIcon: ({ color }) => 
-                        <MaterialIcons size={28} name="9mp" color={color} />,
-                        tabBarActiveTintColor: '#0b5345',
+                    title: "Add New Pet",
                         headerTitleStyle: {
-                            color: '#0b5345',
+                            color: '#333',
                             fontWeight: "bold",
                         }
                 }}
             />
-
-            <Tabs.Screen 
+            <Stack.Screen 
                 name="favorites"
                 options={{
-                    title: "Favorites",
-                    tabBarIcon: ({ color }) => 
-                        <MaterialIcons size={28} name="9mp" color={color} />,
-                        tabBarActiveTintColor: '#0b5345',
+                    title: "My Favorites",
                         headerTitleStyle: {
-                            color: '#0b5345',
+                            color: '#333',
                             fontWeight: "bold",
                         }
                 }}
             />
-
-            <Tabs.Screen 
+            <Stack.Screen 
                 name="home"
                 options={{
                     title: "Home",
-                    tabBarIcon: ({ color }) => 
-                        <MaterialIcons size={28} name="9mp" color={color} />,
-                        tabBarActiveTintColor: '#0b5345',
                         headerTitleStyle: {
-                            color: '#0b5345',
+                            color: '#333',
                             fontWeight: "bold",
                         }
                 }}
             />
-
-            <Tabs.Screen 
+            <Stack.Screen 
+                name="adoption"
+                options={{
+                    title: "Adoption",
+                        headerTitleStyle: {
+                            color: '#333',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
+            <Stack.Screen 
                 name="register"
                 options={{
                     title: "Register",
-                    tabBarIcon: ({ color }) => 
-                        <MaterialIcons size={28} name="9mp" color={color} />,
-                        tabBarActiveTintColor: '#0b5345',
                         headerTitleStyle: {
-                            color: '#0b5345',
+                            color: '#333',
                             fontWeight: "bold",
                         }
                 }}
             />
-
-            <Tabs.Screen 
-                name="messages"
-                options={{
-                    title: "Messages",
-                    tabBarIcon: ({ color }) => 
-                        <MaterialIcons size={28} name="9mp" color={color} />,
-                        tabBarActiveTintColor: '#0b5345',
-                        headerTitleStyle: {
-                            color: '#0b5345',
-                            fontWeight: "bold",
-                        }
-                }}
-            />
-        </Tabs>
+        </Stack>
     )
 }

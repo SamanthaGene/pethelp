@@ -1,7 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { addDoc, collection } from "firebase/firestore";
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Image,
@@ -10,7 +9,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
 import { db } from "../firebaseConfig";
 
@@ -33,39 +32,99 @@ export default function AddPetScreen() {
   };
 
   const uploadImageAsync = async (uri) => {
+  const apiUrl = "https://api.cloudinary.com/v1_1/dhaotosay/image/upload";
+
+  let formData = new FormData();
+
+  if (Platform.OS === "web") {
+    // For Web: fetch the image as blob, then append as file
     const response = await fetch(uri);
     const blob = await response.blob();
-    const filename = `${Date.now()}.jpg`; // Temporary filename
-    const storage = getStorage();
-    const imageRef = ref(storage, `pet_images/${filename}`);
-    await uploadBytes(imageRef, blob);
-    return await getDownloadURL(imageRef);
-  };
+
+    formData.append("file", blob, "upload.jpg");
+  } else {
+    // For iOS and Android: use the object with uri, type, and name
+    formData.append("file", {
+      uri: Platform.OS === "ios" ? uri.replace("file://", "") : uri,
+      type: "image/jpeg",
+      name: "upload.jpg",
+    });
+  }
+
+  formData.append("upload_preset", "pethelp");
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      body: formData,
+      // Don't set headers manually!
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return data.secure_url;
+    } else {
+      console.error("Cloudinary upload error:", data);
+      throw new Error(data.error?.message || "Cloudinary upload failed");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
 
   const handleAddPet = async () => {
-    try {
-      let imageUrl = "";
-      if (image) {
-        imageUrl = await uploadImageAsync(image);
-      }
+  if (!name || !type || !age) {
+    Alert.alert("Validation Error", "Please fill in all fields.");
+    return;
+  }
 
-      await addDoc(collection(db, "pets"), {
-        name,
-        type,
-        age,
-        imageUrl,
-        createdAt: new Date(),
+  try {
+    setUploading(true);
+
+    let imageUrl = null;
+
+    if (image) {
+      const formData = new FormData();
+      formData.append("file", {
+        uri: image,
+        type: "image/jpeg",
+        name: "pet.jpg",
+      });
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(CLOUDINARY_URL, {
+        method: "POST",
+        body: formData,
       });
 
-      Alert.alert("Success", "Pet added successfully!");
-      setName("");
-      setType("");
-      setAge("");
-      setImage(null);
-    } catch (error) {
-      Alert.alert("Error", error.message);
+      const data = await response.json();
+      imageUrl = data.secure_url;
     }
-  };
+
+    await addDoc(collection(db, "pets"), {
+      name,
+      type,
+      age,
+      imageUrl,
+      adopted: false, // ✅ Added here
+      createdAt: new Date(),
+    });
+
+    setName("");
+    setType("");
+    setAge("");
+    setImage(null);
+
+    router.back();
+  } catch (error) {
+    console.error("Error adding pet: ", error);
+    Alert.alert("Error", "Failed to add pet. Please try again.");
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
