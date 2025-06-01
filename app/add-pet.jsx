@@ -10,7 +10,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { db } from "../firebaseConfig";
 
 export default function AddPetScreen() {
@@ -18,6 +20,11 @@ export default function AddPetScreen() {
   const [type, setType] = useState("");
   const [age, setAge] = useState("");
   const [image, setImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dhaotosay/image/upload";
+  const CLOUDINARY_UPLOAD_PRESET = "pethelp";
+  const router = useRouter();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -31,100 +38,75 @@ export default function AddPetScreen() {
     }
   };
 
-  const uploadImageAsync = async (uri) => {
-  const apiUrl = "https://api.cloudinary.com/v1_1/dhaotosay/image/upload";
+  const handleAddPet = async () => {
+    if (!name || !type || !age) {
+      Alert.alert("Validation Error", "Please fill in all fields.");
+      return;
+    }
 
-  let formData = new FormData();
+    try {
+      setUploading(true);
+      let imageUrl = null;
+
+      if (image) {
+  const formData = new FormData();
 
   if (Platform.OS === "web") {
-    // For Web: fetch the image as blob, then append as file
-    const response = await fetch(uri);
+    // Web requires fetching the image blob
+    const response = await fetch(image);
     const blob = await response.blob();
-
     formData.append("file", blob, "upload.jpg");
   } else {
-    // For iOS and Android: use the object with uri, type, and name
+    // Mobile (iOS/Android) supports direct uri upload
     formData.append("file", {
-      uri: Platform.OS === "ios" ? uri.replace("file://", "") : uri,
+      uri: Platform.OS === "ios" ? image.replace("file://", "") : image,
       type: "image/jpeg",
       name: "upload.jpg",
     });
   }
 
-  formData.append("upload_preset", "pethelp");
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      body: formData,
-      // Don't set headers manually!
-    });
+  const response = await fetch(CLOUDINARY_URL, {
+    method: "POST",
+    body: formData,
+  });
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (response.ok) {
-      return data.secure_url;
-    } else {
-      console.error("Cloudinary upload error:", data);
-      throw new Error(data.error?.message || "Cloudinary upload failed");
+  if (!response.ok || !data.secure_url) {
+    throw new Error(data.error?.message || "Cloudinary upload failed");
+  }
+
+  imageUrl = data.secure_url;
+}
+
+      const petData = {
+        name,
+        type,
+        age,
+        adopted: false,
+        createdAt: new Date(),
+      };
+
+      if (imageUrl) {
+        petData.imageUrl = imageUrl;
+      }
+
+      await addDoc(collection(db, "pets"), petData);
+
+      setName("");
+      setType("");
+      setAge("");
+      setImage(null);
+      router.back();
+    } catch (error) {
+      console.error("Error adding pet: ", error);
+      Alert.alert("Error", "Failed to add pet. Please try again.");
+    } finally {
+      setUploading(false);
     }
-  } catch (error) {
-    throw error;
-  }
-};
-
-  const handleAddPet = async () => {
-  if (!name || !type || !age) {
-    Alert.alert("Validation Error", "Please fill in all fields.");
-    return;
-  }
-
-  try {
-    setUploading(true);
-
-    let imageUrl = null;
-
-    if (image) {
-      const formData = new FormData();
-      formData.append("file", {
-        uri: image,
-        type: "image/jpeg",
-        name: "pet.jpg",
-      });
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-      const response = await fetch(CLOUDINARY_URL, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      imageUrl = data.secure_url;
-    }
-
-    await addDoc(collection(db, "pets"), {
-      name,
-      type,
-      age,
-      imageUrl,
-      adopted: false, // ✅ Added here
-      createdAt: new Date(),
-    });
-
-    setName("");
-    setType("");
-    setAge("");
-    setImage(null);
-
-    router.back();
-  } catch (error) {
-    console.error("Error adding pet: ", error);
-    Alert.alert("Error", "Failed to add pet. Please try again.");
-  } finally {
-    setUploading(false);
-  }
-};
-
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -161,8 +143,14 @@ export default function AddPetScreen() {
 
       {image && <Image source={{ uri: image }} style={styles.image} />}
 
-      <TouchableOpacity style={styles.submitButton} onPress={handleAddPet}>
-        <Text style={styles.submitButtonText}>Submit Pet</Text>
+      {uploading && (
+        <Text style={{ marginBottom: 16 }}>Uploading...</Text>
+      )}
+
+      <TouchableOpacity style={styles.submitButton} onPress={handleAddPet} disabled={uploading}>
+        <Text style={styles.submitButtonText}>
+          {uploading ? "Submitting..." : "Submit Pet"}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );

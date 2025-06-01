@@ -64,6 +64,16 @@ export default function Layout () {
                         }
                 }}
             />
+            <Stack.Screen 
+                name="pet/[id]"
+                options={{
+                    title: "Pet Details",
+                        headerTitleStyle: {
+                            color: '#333',
+                            fontWeight: "bold",
+                        }
+                }}
+            />
         </Stack>
     )
 }

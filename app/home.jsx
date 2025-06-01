@@ -1,9 +1,8 @@
 import { AntDesign, Entypo, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { router } from "expo-router";
 import {
   ActivityIndicator,
   Alert,
@@ -24,6 +23,23 @@ export default function HomeScreen() {
   const [pets, setPets] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
+
+  useEffect(() => {
+  const fetchUserProfile = async () => {
+    try {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        setUserProfile(userSnap.data());
+      }
+    } catch (err) {
+      console.error("Failed to load user profile", err);
+    }
+  };
+
+  fetchUserProfile();
+}, []);
 
   useEffect(() => {
     const fetchPetsAndFavorites = async () => {
@@ -65,19 +81,23 @@ export default function HomeScreen() {
   };
 
   const handleLogout = async () => {
+  try {
     await signOut(auth);
     router.replace("/");
-  };
+  } catch (error) {
+    Alert.alert("Logout Failed", error.message);
+  }
+};
 
   const renderPetItem = ({ item }) => (
   <TouchableOpacity onPress={() => router.push(`/pet/${item.id}`)}>
     <View style={styles.petCard}>
-      {item.imageUrl && (
-        <Image source={{ uri: item.imageUrl }} style={styles.petImage} />
-      )}
+      {item.imageUrl && typeof item.imageUrl === "string" && (
+  <Image source={{ uri: item.imageUrl }} style={styles.petImage} />
+)}
       <View style={{ flex: 1 }}>
         <Text style={styles.petName}>{item.name}</Text>
-        <Text style={styles.petInfo}>{item.type} • {item.age} yrs</Text>
+        <Text style={styles.petInfo}>{item.type} • {item.age}</Text>
         {!favorites.includes(item.id) ? (
           <Text style={styles.addFavBtn}>💖 Tap to View</Text>
         ) : (
@@ -95,6 +115,23 @@ export default function HomeScreen() {
         <Text style={styles.title}>Welcome to PetPal 🐾</Text>
         <Text style={styles.subtitle}>Find your furry friends today!</Text>
       </View>
+
+      {userProfile && (
+  <View style={styles.userProfile}>
+    <View>
+      {userProfile.username && (
+        <Text style={styles.username}>{userProfile.username}</Text> // ✅ Display username
+      )}
+      <Text style={styles.emailText}>{userProfile.email}</Text>
+    </View>
+    {userProfile.profileImage ? (
+      <Image source={{ uri: userProfile.profileImage }} style={styles.avatar} />
+    ) : (
+      <FontAwesome name="user-circle" size={36} color="#888" />
+    )}
+  </View>
+)}
+
 
       {loading ? (
         <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} />
@@ -227,4 +264,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  userProfile: {
+  position: "absolute",
+  top: 50,
+  right: 24,
+  flexDirection: "row",
+  alignItems: "center",
+  zIndex: 10,
+},
+username: {
+  marginRight: 10,
+  fontSize: 14,
+  fontWeight: "600",
+  color: "#555",
+},
+avatar: {
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  backgroundColor: "#ccc",
+},
+emailText: {
+  fontSize: 12,
+  color: "#888",
+},
 });

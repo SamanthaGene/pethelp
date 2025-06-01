@@ -1,11 +1,8 @@
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Platform,
@@ -16,17 +13,23 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth, db, storage } from "../firebaseConfig"; // Ensure storage is imported
+import { useRouter } from "expo-router";
+import { auth, db } from "../firebaseConfig";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [image, setImage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [username, setUsername] = useState("");
+
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dhaotosay/image/upload";
+  const CLOUDINARY_UPLOAD_PRESET = "pethelp";
   const router = useRouter();
 
   const pickImage = async () => {
-    if (loading) return;
+    if (uploading) return;
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -38,57 +41,92 @@ export default function RegisterScreen() {
     }
   };
 
-  const uploadImageAsync = async (uri, userId) => {
-    const response = await fetch(uri);
-    const blob = await response.blob();
+  const uploadImageToCloudinary = async (uri) => {
+    const formData = new FormData();
 
-    const filename = `${userId}.jpg`;
-    const imageRef = ref(storage, `profile_images/${filename}`);
-
-    await uploadBytes(imageRef, blob);
-    return await getDownloadURL(imageRef);
-  };
-
-  const handleRegister = async () => {
-    if (!email.includes("@") || !password) {
-      Alert.alert("Invalid Input", "Please enter a valid email and password.");
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert("Weak Password", "Password must be at least 6 characters.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const userId = userCredential.user.uid;
-
-      let imageUrl = "";
-      if (image) {
-        imageUrl = await uploadImageAsync(image, userId);
-      }
-
-      await setDoc(doc(db, "users", userId), {
-        email,
-        profileImage: imageUrl,
-        createdAt: new Date(),
+    if (Platform.OS === "web") {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      formData.append("file", blob, "upload.jpg");
+    } else {
+      formData.append("file", {
+        uri: Platform.OS === "ios" ? uri.replace("file://", "") : uri,
+        type: "image/jpeg",
+        name: "upload.jpg",
       });
-
-      Alert.alert("Success", "Account Created!");
-      router.replace("/home");
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Registration Error", error.message);
-    } finally {
-      setLoading(false);
     }
+
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    const response = await fetch(CLOUDINARY_URL, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.secure_url) {
+      throw new Error(data.error?.message || "Cloudinary upload failed");
+    }
+
+    return data.secure_url;
   };
+
+ const handleRegister = async () => {
+  if (!email.includes("@") || !password) {
+    Alert.alert("Invalid Input", "Please enter a valid email and password.");
+    return;
+  }
+
+  if (password.length < 6) {
+    Alert.alert("Weak Password", "Password must be at least 6 characters.");
+    return;
+  }
+
+  setUploading(true);
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userId = userCredential.user.uid;
+
+    let imageUrl = "";
+
+    if (image) {
+      imageUrl = await uploadImageToCloudinary(image);
+    }
+
+    await setDoc(doc(db, "users", userId), {
+  email,
+  username,
+  profileImage: imageUrl,
+  createdAt: new Date(),
+});
+
+
+    Alert.alert("Success", "Account created!");
+    router.replace("/home"); // ✅ Redirect to home after successful registration
+  } catch (error) {
+    console.error("Registration error:", error);
+    Alert.alert("Error", error.message || "Failed to register.");
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Create an Account</Text>
+
+      <TextInput
+  placeholder="Username"
+  value={username}
+  onChangeText={setUsername}
+  style={styles.input}
+  autoCapitalize="none"
+  placeholderTextColor="#999"
+/>
+
 
       <TextInput
         placeholder="Email"
@@ -97,6 +135,7 @@ export default function RegisterScreen() {
         style={styles.input}
         keyboardType="email-address"
         autoCapitalize="none"
+        placeholderTextColor="#999"
       />
 
       <TextInput
@@ -105,40 +144,26 @@ export default function RegisterScreen() {
         onChangeText={setPassword}
         style={styles.input}
         secureTextEntry
+        placeholderTextColor="#999"
       />
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.disabledButton]}
-        onPress={pickImage}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
+      <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
+        <Text style={styles.imagePickerButtonText}>
           {image ? "Change Profile Picture" : "Pick Profile Picture"}
         </Text>
       </TouchableOpacity>
 
-      {image ? (
-        <Image source={{ uri: image }} style={styles.image} />
-      ) : (
-        <View style={styles.imagePlaceholder}>
-          <Text style={{ color: "#aaa" }}>No image selected</Text>
-        </View>
-      )}
+      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {uploading && <Text style={{ marginBottom: 16 }}>Uploading...</Text>}
 
       <TouchableOpacity
-        style={[
-          styles.button,
-          { backgroundColor: "#28A745" },
-          loading && styles.disabledButton,
-        ]}
+        style={[styles.submitButton, uploading && { backgroundColor: "#ccc" }]}
         onPress={handleRegister}
-        disabled={loading}
+        disabled={uploading}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Register</Text>
-        )}
+        <Text style={styles.submitButtonText}>
+          {uploading ? "Registering..." : "Register"}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -170,27 +195,18 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     marginBottom: 16,
     fontSize: 16,
+    color: "#333",
   },
-  button: {
+  imagePickerButton: {
     width: "100%",
     maxWidth: 300,
     backgroundColor: "#007AFF",
     paddingVertical: 14,
-    paddingHorizontal: 24,
     borderRadius: 14,
-    marginBottom: 16,
     alignItems: "center",
-    ...Platform.select({
-      android: { elevation: 4 },
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-      },
-    }),
+    marginBottom: 20,
   },
-  buttonText: {
+  imagePickerButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
@@ -199,19 +215,20 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    alignSelf: "center",
-    marginVertical: 16,
+    marginBottom: 16,
   },
-  imagePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#e0e0e0",
+  submitButton: {
+    width: "100%",
+    maxWidth: 300,
+    backgroundColor: "#28A745",
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 16,
+    marginTop: 10,
   },
-  disabledButton: {
-    backgroundColor: "#A5D6A7",
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
   },
 });

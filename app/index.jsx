@@ -1,18 +1,18 @@
+import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import React, { useState } from "react";
+import { auth } from "../firebaseConfig";
 import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
 } from "react-native";
-import { auth } from "../firebaseConfig";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -25,7 +25,6 @@ export default function LoginScreen() {
       Alert.alert("Missing Fields", "Please enter both email and password.");
       return;
     }
-
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -49,7 +48,7 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.card}>
-        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.title}>Welcome Back!</Text>
 
         <TextInput
           placeholder="Email"
