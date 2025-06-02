@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  Button,
-  Alert,
-  StyleSheet,
-  ScrollView,
-  Image,
-} from "react-native";
+import { View, Text, ActivityIndicator, Button, Alert, StyleSheet, ScrollView, Image } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { db, auth } from "../../firebaseConfig";
 import { doc, getDoc, collection, addDoc, query, where, getDocs } from "firebase/firestore";
@@ -61,41 +52,40 @@ export default function PetDetailScreen() {
   }, [id]);
 
   const saveToFavorites = async () => {
-  if (!auth.currentUser) {
-    Alert.alert("Error", "You need to be logged in to save favorites.");
-    return;
-  }
-
-  setSaving(true);
-  try {
-    // ✅ Check if already in favorites
-    const favQuery = query(
-      collection(db, "favorites"),
-      where("userId", "==", auth.currentUser.uid),
-      where("petId", "==", id)
-    );
-    const favSnap = await getDocs(favQuery);
-
-    if (!favSnap.empty) {
-      Alert.alert("Already a Favorite", "This pet is already in your favorites.");
-      setIsFavorite(true);
+    if (!auth.currentUser) {
+      Alert.alert("Error", "You need to be logged in to save favorites.");
       return;
     }
 
-    await addDoc(collection(db, "favorites"), {
-      userId: auth.currentUser.uid,
-      petId: id,
-      savedAt: new Date(),
-    });
+    setSaving(true);
+    try {
+      const favQuery = query(
+        collection(db, "favorites"),
+        where("userId", "==", auth.currentUser.uid),
+        where("petId", "==", id)
+      );
+      const favSnap = await getDocs(favQuery);
 
-    Alert.alert("Added to favorites!");
-    setIsFavorite(true);
-  } catch (error) {
-    Alert.alert("Error", error.message);
-  } finally {
-    setSaving(false);
-  }
-};
+      if (!favSnap.empty) {
+        Alert.alert("Already a Favorite", "This pet is already in your favorites.");
+        setIsFavorite(true);
+        return;
+      }
+
+      await addDoc(collection(db, "favorites"), {
+        userId: auth.currentUser.uid,
+        petId: id,
+        savedAt: new Date(),
+      });
+
+      Alert.alert("Added to favorites!");
+      setIsFavorite(true);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
 
   if (loading) {

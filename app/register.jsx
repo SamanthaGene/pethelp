@@ -2,17 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from "react";
-import {
-  Alert,
-  Image,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { auth, db } from "../firebaseConfig";
 
@@ -72,46 +62,46 @@ export default function RegisterScreen() {
     return data.secure_url;
   };
 
- const handleRegister = async () => {
-  if (!email.includes("@") || !password) {
-    Alert.alert("Invalid Input", "Please enter a valid email and password.");
-    return;
-  }
-
-  if (password.length < 6) {
-    Alert.alert("Weak Password", "Password must be at least 6 characters.");
-    return;
-  }
-
-  setUploading(true);
-
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const userId = userCredential.user.uid;
-
-    let imageUrl = "";
-
-    if (image) {
-      imageUrl = await uploadImageToCloudinary(image);
+  const handleRegister = async () => {
+    if (!email.includes("@") || !password) {
+      Alert.alert("Invalid Input", "Please enter a valid email and password.");
+      return;
     }
 
-    await setDoc(doc(db, "users", userId), {
-  email,
-  username,
-  profileImage: imageUrl,
-  createdAt: new Date(),
-});
+    if (password.length < 6) {
+      Alert.alert("Weak Password", "Password must be at least 6 characters.");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userId = userCredential.user.uid;
+
+      let imageUrl = "";
+
+      if (image) {
+        imageUrl = await uploadImageToCloudinary(image);
+      }
+
+      await setDoc(doc(db, "users", userId), {
+        email,
+        username,
+        profileImage: imageUrl,
+        createdAt: new Date(),
+      });
 
 
-    Alert.alert("Success", "Account created!");
-    router.replace("/home"); // ✅ Redirect to home after successful registration
-  } catch (error) {
-    console.error("Registration error:", error);
-    Alert.alert("Error", error.message || "Failed to register.");
-  } finally {
-    setUploading(false);
-  }
-};
+      Alert.alert("Success", "Account created!");
+      router.replace("/home");
+    } catch (error) {
+      console.error("Registration error:", error);
+      Alert.alert("Error", error.message || "Failed to register.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
 
   return (
@@ -119,13 +109,13 @@ export default function RegisterScreen() {
       <Text style={styles.title}>Create an Account</Text>
 
       <TextInput
-  placeholder="Username"
-  value={username}
-  onChangeText={setUsername}
-  style={styles.input}
-  autoCapitalize="none"
-  placeholderTextColor="#999"
-/>
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
+        style={styles.input}
+        autoCapitalize="none"
+        placeholderTextColor="#999"
+      />
 
 
       <TextInput

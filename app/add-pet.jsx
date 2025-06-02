@@ -1,17 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { addDoc, collection } from "firebase/firestore";
 import React, { useState } from "react";
-import {
-  Alert,
-  Image,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { db } from "../firebaseConfig";
 
@@ -49,37 +39,35 @@ export default function AddPetScreen() {
       let imageUrl = null;
 
       if (image) {
-  const formData = new FormData();
+        const formData = new FormData();
 
-  if (Platform.OS === "web") {
-    // Web requires fetching the image blob
-    const response = await fetch(image);
-    const blob = await response.blob();
-    formData.append("file", blob, "upload.jpg");
-  } else {
-    // Mobile (iOS/Android) supports direct uri upload
-    formData.append("file", {
-      uri: Platform.OS === "ios" ? image.replace("file://", "") : image,
-      type: "image/jpeg",
-      name: "upload.jpg",
-    });
-  }
+        if (Platform.OS === "web") {
+          const response = await fetch(image);
+          const blob = await response.blob();
+          formData.append("file", blob, "upload.jpg");
+        } else {
+          formData.append("file", {
+            uri: Platform.OS === "ios" ? image.replace("file://", "") : image,
+            type: "image/jpeg",
+            name: "upload.jpg",
+          });
+        }
 
-  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-  const response = await fetch(CLOUDINARY_URL, {
-    method: "POST",
-    body: formData,
-  });
+        const response = await fetch(CLOUDINARY_URL, {
+          method: "POST",
+          body: formData,
+        });
 
-  const data = await response.json();
+        const data = await response.json();
 
-  if (!response.ok || !data.secure_url) {
-    throw new Error(data.error?.message || "Cloudinary upload failed");
-  }
+        if (!response.ok || !data.secure_url) {
+          throw new Error(data.error?.message || "Cloudinary upload failed");
+        }
 
-  imageUrl = data.secure_url;
-}
+        imageUrl = data.secure_url;
+      }
 
       const petData = {
         name,

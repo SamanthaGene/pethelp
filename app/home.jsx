@@ -3,18 +3,7 @@ import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { addDoc, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { auth, db } from "../firebaseConfig";
 
 export default function HomeScreen() {
@@ -26,20 +15,20 @@ export default function HomeScreen() {
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
-  const fetchUserProfile = async () => {
-    try {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        setUserProfile(userSnap.data());
+    const fetchUserProfile = async () => {
+      try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserProfile(userSnap.data());
+        }
+      } catch (err) {
+        console.error("Failed to load user profile", err);
       }
-    } catch (err) {
-      console.error("Failed to load user profile", err);
-    }
-  };
+    };
 
-  fetchUserProfile();
-}, []);
+    fetchUserProfile();
+  }, []);
 
   useEffect(() => {
     const fetchPetsAndFavorites = async () => {
@@ -81,32 +70,32 @@ export default function HomeScreen() {
   };
 
   const handleLogout = async () => {
-  try {
-    await signOut(auth);
-    router.replace("/");
-  } catch (error) {
-    Alert.alert("Logout Failed", error.message);
-  }
-};
+    try {
+      await signOut(auth);
+      router.replace("/");
+    } catch (error) {
+      Alert.alert("Logout Failed", error.message);
+    }
+  };
 
   const renderPetItem = ({ item }) => (
-  <TouchableOpacity onPress={() => router.push(`/pet/${item.id}`)}>
-    <View style={styles.petCard}>
-      {item.imageUrl && typeof item.imageUrl === "string" && (
-  <Image source={{ uri: item.imageUrl }} style={styles.petImage} />
-)}
-      <View style={{ flex: 1 }}>
-        <Text style={styles.petName}>{item.name}</Text>
-        <Text style={styles.petInfo}>{item.type} • {item.age}</Text>
-        {!favorites.includes(item.id) ? (
-          <Text style={styles.addFavBtn}>💖 Tap to View</Text>
-        ) : (
-          <Text style={styles.addedFavText}>❤️ In Favorites</Text>
+    <TouchableOpacity onPress={() => router.push(`/pet/${item.id}`)}>
+      <View style={styles.petCard}>
+        {item.imageUrl && typeof item.imageUrl === "string" && (
+          <Image source={{ uri: item.imageUrl }} style={styles.petImage} />
         )}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.petName}>{item.name}</Text>
+          <Text style={styles.petInfo}>{item.type} • {item.age}</Text>
+          {!favorites.includes(item.id) ? (
+            <Text style={styles.addFavBtn}>💖 Tap to View</Text>
+          ) : (
+            <Text style={styles.addedFavText}>❤️ In Favorites</Text>
+          )}
+        </View>
       </View>
-    </View>
-  </TouchableOpacity>
-);
+    </TouchableOpacity>
+  );
 
 
   return (
@@ -117,20 +106,20 @@ export default function HomeScreen() {
       </View>
 
       {userProfile && (
-  <View style={styles.userProfile}>
-    <View>
-      {userProfile.username && (
-        <Text style={styles.username}>{userProfile.username}</Text> // ✅ Display username
+        <View style={styles.userProfile}>
+          <View>
+            {userProfile.username && (
+              <Text style={styles.username}>{userProfile.username}</Text>
+            )}
+            <Text style={styles.emailText}>{userProfile.email}</Text>
+          </View>
+          {userProfile.profileImage ? (
+            <Image source={{ uri: userProfile.profileImage }} style={styles.avatar} />
+          ) : (
+            <FontAwesome name="user-circle" size={36} color="#888" />
+          )}
+        </View>
       )}
-      <Text style={styles.emailText}>{userProfile.email}</Text>
-    </View>
-    {userProfile.profileImage ? (
-      <Image source={{ uri: userProfile.profileImage }} style={styles.avatar} />
-    ) : (
-      <FontAwesome name="user-circle" size={36} color="#888" />
-    )}
-  </View>
-)}
 
 
       {loading ? (
@@ -265,27 +254,27 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   userProfile: {
-  position: "absolute",
-  top: 50,
-  right: 24,
-  flexDirection: "row",
-  alignItems: "center",
-  zIndex: 10,
-},
-username: {
-  marginRight: 10,
-  fontSize: 14,
-  fontWeight: "600",
-  color: "#555",
-},
-avatar: {
-  width: 36,
-  height: 36,
-  borderRadius: 18,
-  backgroundColor: "#ccc",
-},
-emailText: {
-  fontSize: 12,
-  color: "#888",
-},
+    position: "absolute",
+    top: 50,
+    right: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  username: {
+    marginRight: 10,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#555",
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#ccc",
+  },
+  emailText: {
+    fontSize: 12,
+    color: "#888",
+  },
 });

@@ -1,14 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  StyleSheet,
-} from "react-native";
+import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from "react-native";
 import { collection, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
 import { db, auth } from "../firebaseConfig";
 import { useFocusEffect } from "@react-navigation/native";
@@ -18,7 +9,7 @@ export default function AdoptionScreen() {
   const [loading, setLoading] = useState(true);
 
   const fetchPets = async () => {
-    setLoading(true); // important to show spinner when refocusing
+    setLoading(true);
     try {
       const q = query(collection(db, "pets"), where("adopted", "==", false));
       const snapshot = await getDocs(q);
@@ -32,7 +23,6 @@ export default function AdoptionScreen() {
     }
   };
 
-  // Refetch pets when screen becomes active
   useFocusEffect(
     useCallback(() => {
       fetchPets();
@@ -40,7 +30,7 @@ export default function AdoptionScreen() {
   );
 
   useEffect(() => {
-    fetchPets(); // initial fetch
+    fetchPets();
   }, []);
 
   const handleAdopt = async (petId) => {
